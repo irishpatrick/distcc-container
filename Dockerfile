@@ -1,0 +1,32 @@
+FROM fedora:34 AS core
+
+FROM core AS deps
+
+RUN dnf install -y \
+	clang \
+	distcc \
+	distcc-server \
+	doxygen \
+	gcc \
+	make \
+	ninja-build \
+	htop \
+	python3 \
+	&& yum clean all
+
+RUN update-distcc-symlinks
+
+FROM deps as server
+
+ENTRYPOINT [\
+	"distccd", \
+	"--daemon", \
+	"--no-detach", \
+	"--user", "distcc", \
+	"--port", "3632", \
+	"--stats", \
+	"--stats-port", "3633", \
+	"--log-stderr", \
+	"--listen", "0.0.0.0"\
+]
+
