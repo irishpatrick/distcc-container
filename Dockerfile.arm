@@ -1,0 +1,49 @@
+FROM fedora:34 AS core
+
+FROM core AS deps
+
+RUN dnf install -y \
+	distcc \
+	distcc-server \
+	doxygen \
+	make \
+	ninja-build \
+	htop \
+	python3 \
+	binutils-arm-linux-gnu \
+	gcc-arm-linux-gnu \
+	gcc-c++-arm-linux-gnu \
+	&& yum clean all
+
+FROM deps AS links
+
+RUN ln -s /usr/bin/arm-linux-gnu-gcc /usr/bin/gcc
+RUN ln -s /usr/bin/arm-linux-gnu-g++ /usr/bin/g++
+RUN ln -s /usr/bin/arm-linux-gnu-gcc /usr/bin/cc
+RUN ln -s /usr/bin/arm-linux-gnu-cpp /usr/bin/cpp
+RUN ln -s /usr/bin/arm-linux-gnu-c++ /usr/bin/c++
+
+RUN ln -s /usr/bin/gcc /usr/lib64/distcc/gcc
+RUN ln -s /usr/bin/g++ /usr/lib64/distcc/g++
+RUN ln -s /usr/bin/cc /usr/lib64/distcc/cc
+RUN ln -s /usr/bin/cpp /usr/lib64/distcc/cpp
+RUN ln -s /usr/bin/c++ /usr/lib64/distcc/c++
+
+RUN mkdir /usr/lib64/gcc-cross
+RUN update-distcc-symlinks
+RUN rmdir /usr/lib64/gcc-cross
+
+FROM links AS server
+
+ENTRYPOINT [\
+	"distccd", \
+	"--daemon", \
+	"--no-detach", \
+	"--user", "distcc", \
+	"--port", "3632", \
+	"--stats", \
+	"--stats-port", "3633", \
+	"--log-stderr", \
+	"--listen", "0.0.0.0"\
+]
+

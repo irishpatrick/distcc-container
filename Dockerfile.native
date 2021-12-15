@@ -12,6 +12,8 @@ RUN dnf install -y \
 	ninja-build \
 	htop \
 	python3 \
+	binutils-arm-linux-gnu \
+	gcc-arm-linux-gnu \
 	&& yum clean all
 
 RUN update-distcc-symlinks
